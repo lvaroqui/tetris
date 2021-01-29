@@ -1,24 +1,20 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
-const float BLOCK_SIZE = 40;
+#include "Grid.hpp"
 
 int main() {
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 
-    sf::RenderWindow window(sf::VideoMode(12 * BLOCK_SIZE, 22 * BLOCK_SIZE), "Tetris", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(FULL_AREA_WIDTH * BLOCK_SIZE, FULL_AREA_HEIGHT * BLOCK_SIZE), "Tetris", sf::Style::Default, settings);
 
     window.setFramerateLimit(144);
 
-    sf::RectangleShape shape({BLOCK_SIZE - 4, BLOCK_SIZE - 4});
-    shape.setFillColor(sf::Color::Cyan);
-    shape.setOutlineColor(sf::Color::Blue);
-    shape.setOutlineThickness(2.f);
-    shape.setPosition(2, 2);
-
     const float normalDropInterval = 1.f;
     const float fastDropInterval = 0.05f;
+
+    Grid grid;
 
     sf::Clock cycleClock;
     while (window.isOpen()) {
@@ -33,13 +29,10 @@ int main() {
             if (event.type == sf::Event::KeyPressed) {
                 switch (event.key.code) {
                     case sf::Keyboard::Left:
-                        shape.move({-BLOCK_SIZE, 0.f});
                         break;
                     case sf::Keyboard::Right:
-                        shape.move({BLOCK_SIZE, 0.f});
                         break;
                     case sf::Keyboard::Up:
-                        shape.move({0.f, -1.f});
                         break;
                     default:
                         break;
@@ -47,15 +40,16 @@ int main() {
             }
         }
 
-        float dropInterval = sf::Keyboard::isKeyPressed(sf::Keyboard::Down) ? fastDropInterval : normalDropInterval;
+        float dropInterval = sf::Keyboard::isKeyPressed(sf::Keyboard::Down)
+                                 ? fastDropInterval
+                                 : normalDropInterval;
 
         if (cycleClock.getElapsedTime().asSeconds() > dropInterval) {
             cycleClock.restart();
-            shape.move(0, BLOCK_SIZE);
         }
 
         window.clear();
-        window.draw(shape);
+        window.draw(grid);
         window.display();
     }
 
