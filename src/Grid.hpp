@@ -56,15 +56,22 @@ public:
         return true;
     }
 
-    bool down() {
-        bool moved = moveTetromino(0, 1);
+    void down() {
+        moveTetromino(0, 1);
 
-        if (!moved) {
+        if (isStuck()) {
             clear();
-            mActiveTetromino.release();
         }
+    }
 
-        return moved;
+    bool isStuck() {
+        auto tmp = mActiveTetromino->clone();
+        tmp->move(0, 1);
+
+        hideTetromino();
+        bool stuck = !isValid(*tmp);
+        showTetromino();
+        return stuck;
     }
 
     void clear() {
@@ -95,7 +102,7 @@ public:
                     }
                 }
             }
-            
+
             // Clear top line
             for (int j = 0; j < PLAY_AREA_WIDTH; j++) {
                 mPlayArea[j][0].setType(Block::None);
@@ -107,7 +114,8 @@ public:
         if (!mActiveTetromino) {
             return;
         }
-        while (down()) {
+        while (!isStuck()) {
+            down();
         };
     }
 
@@ -134,7 +142,7 @@ public:
 
         newPos->rotateRight();
 
-        if (!validate(*newPos)) {
+        if (!isValid(*newPos)) {
             showTetromino();
             return;
         }
@@ -150,7 +158,7 @@ private:
 
         newPos->move(dX, dY);
 
-        if (!validate(*newPos)) {
+        if (!isValid(*newPos)) {
             showTetromino();
             return false;
         }
@@ -161,7 +169,7 @@ private:
         return true;
     }
 
-    bool validate(Tetromino::Base& tetr) {
+    bool isValid(Tetromino::Base& tetr) {
         for (auto c : tetr.toCoord()) {
             if (c.y >= PLAY_AREA_HEIGHT) {
                 return false;

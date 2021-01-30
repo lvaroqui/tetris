@@ -12,8 +12,9 @@ int main() {
     window.setFramerateLimit(144);
     window.setKeyRepeatEnabled(false);
 
-    const float normalDropInterval = .5f;
+    const float baseInterval = .5f;
     const float fastDropInterval = 0.05f;
+    bool fastDrop = false;
 
     const float slideInterval = 0.1f;
 
@@ -22,6 +23,7 @@ int main() {
 
     sf::Clock dropClock;
     sf::Clock slideClock;
+    sf::Clock stuckClock; // Clock to check that the piece is stuck
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -36,12 +38,10 @@ int main() {
                     case sf::Keyboard::Left:
                         grid.left();
                         slideClock.restart();
-                        dropClock.restart();
                         break;
                     case sf::Keyboard::Right:
                         grid.right();
                         slideClock.restart();
-                        dropClock.restart();
                         break;
                     case sf::Keyboard::Space:
                         dropClock.restart();
@@ -52,12 +52,22 @@ int main() {
                         }
                         dropClock.restart();
                         slideClock.restart();
+                        stuckClock.restart();
+                        break;
+                    case sf::Keyboard::Down:
+                        fastDrop = true;
                         break;
                     case sf::Keyboard::Up:
                         grid.rotateRight();
-                        dropClock.restart();
+                        stuckClock.restart();
                         break;
                     default:
+                        break;
+                }
+            } else if (event.type == sf::Event::KeyReleased) {
+                switch (event.key.code) {
+                    case sf::Keyboard::Down:
+                        fastDrop = false;
                         break;
                 }
             }
@@ -75,20 +85,24 @@ int main() {
             slideClock.restart();
         }
 
-        float dropInterval = sf::Keyboard::isKeyPressed(sf::Keyboard::Down)
-                                 ? fastDropInterval
-                                 : normalDropInterval;
+        float dropInterval = fastDrop ? fastDropInterval : baseInterval;
 
         if (dropClock.getElapsedTime().asSeconds() > dropInterval) {
             dropClock.restart();
 
-            if (!grid.down()) {
+            grid.down();
+        }
+
+        if (stuckClock.getElapsedTime().asSeconds() > baseInterval) {
+            if (grid.isStuck()) {
                 if (!grid.spawnTetromino()) {
                     std::exit(0);  // lose
                 }
+                fastDrop = false;
                 slideClock.restart();
                 dropClock.restart();
             }
+            stuckClock.restart();
         }
 
         window.clear();
