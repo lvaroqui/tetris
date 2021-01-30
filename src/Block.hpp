@@ -7,15 +7,17 @@
 class Block : public sf::Drawable {
 public:
     enum Type {
-        None,
-        Border,
-        I,
+        None = 0,
+        Border = 1,
+        First = 2,
+        I = 2,
         J,
         L,
         O,
         S,
         T,
-        Z
+        Z,
+        Last = Z
     };
 
     Block(float x = 0, float y = 0, Type type = None);

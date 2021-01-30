@@ -1,6 +1,6 @@
 #include "Grid.hpp"
 
-Grid::Grid() {
+Grid::Grid() : gen(rd()), distrib(Block::First, Block::Last) {
     mBorder.reserve(FULL_AREA_HEIGHT * 2 + FULL_AREA_HEIGHT - 2);
 
     // Vertical borders
