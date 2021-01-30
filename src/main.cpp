@@ -23,7 +23,7 @@ int main() {
 
     sf::Clock dropClock;
     sf::Clock slideClock;
-    sf::Clock stuckClock; // Clock to check that the piece is stuck
+    sf::Clock stuckClock;  // Clock to check that the piece is stuck
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {

@@ -9,8 +9,9 @@ public:
     enum Type {
         None = 0,
         Border = 1,
-        First = 2,
-        I = 2,
+        Ghost = 2,
+        First = 3,
+        I = 3,
         J,
         L,
         O,

@@ -53,6 +53,7 @@ public:
             }
             block.setType(type);
         }
+        computeGhost();
         return true;
     }
 
@@ -82,7 +83,7 @@ public:
         for (int i = 0; i < PLAY_AREA_HEIGHT; i++) {
             bool full = true;
             for (int j = 0; j < PLAY_AREA_WIDTH; j++) {
-                if (mPlayArea[j][i].type() == Block::None) {
+                if (mPlayArea[j][i].type() < Block::First) {
                     full = false;
                     break;
                 }
@@ -124,6 +125,7 @@ public:
             return;
         }
         moveTetromino(-1, 0);
+        computeGhost();
     }
 
     void right() {
@@ -131,6 +133,7 @@ public:
             return;
         }
         moveTetromino(1, 0);
+        computeGhost();
     }
 
     void rotateRight() {
@@ -149,6 +152,8 @@ public:
 
         mActiveTetromino = std::move(newPos);
         showTetromino();
+
+        computeGhost();
     }
 
 private:
@@ -179,7 +184,7 @@ private:
                 return false;
             }
 
-            if (mPlayArea[c.x][c.y].type() != Block::None) {
+            if (mPlayArea[c.x][c.y].type() >= Block::First) {
                 return false;
             }
         }
@@ -198,9 +203,34 @@ private:
         }
     }
 
+    void computeGhost() {
+        // Clean previous ghost
+        if (mGhostTetromino) {
+            for (auto c : mGhostTetromino->toCoord()) {
+                if (mPlayArea[c.x][c.y].type() == Block::Ghost) {
+                    mPlayArea[c.x][c.y].setType(Block::None);
+                }
+            }
+        }
+
+        mGhostTetromino = mActiveTetromino->clone();
+        hideTetromino();
+        while (isValid(*mGhostTetromino)) {
+            mGhostTetromino->move(0, 1);
+        }
+        mGhostTetromino->move(0, -1);
+
+        for (auto c : mGhostTetromino->toCoord()) {
+            mPlayArea[c.x][c.y].setType(Block::Ghost);
+        }
+
+        showTetromino();
+    }
+
     std::vector<Block> mBorder;
     std::array<std::array<Block, PLAY_AREA_HEIGHT>, PLAY_AREA_WIDTH> mPlayArea;
     std::unique_ptr<Tetromino::Base> mActiveTetromino;
+    std::unique_ptr<Tetromino::Base> mGhostTetromino;
 
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen;       //Standard mersenne_twister_engine seeded with rd()

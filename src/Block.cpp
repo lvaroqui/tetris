@@ -14,6 +14,8 @@ std::pair<sf::Color, sf::Color> Block::toColors(Type type) {
             return std::make_pair(sf::Color(0), sf::Color(0));
         case Border:
             return std::make_pair(sf::Color(0x444444ff), sf::Color(0x222222ff));
+        case Ghost:
+            return std::make_pair(sf::Color(0xffffff44), sf::Color(0xffffffaa));
         case I:
             return std::make_pair(sf::Color(0x17d9ebff), sf::Color(0x157085ff));
         case J:
