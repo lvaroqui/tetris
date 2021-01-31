@@ -82,15 +82,14 @@ int main() {
             }
         }
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) &&
-            slideClock.getElapsedTime().asSeconds() > slideInterval) {
-            grid.left();
-            slideClock.restart();
-        }
+        if (slideClock.getElapsedTime().asSeconds() > slideInterval) {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+                grid.left();
+            }
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) &&
-            slideClock.getElapsedTime().asSeconds() > slideInterval) {
-            grid.right();
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+                grid.right();
+            }
             slideClock.restart();
         }
 
@@ -102,7 +101,7 @@ int main() {
             grid.down();
         }
 
-        if (stuckClock.getElapsedTime().asSeconds() > baseInterval) {
+        if (stuckClock.getElapsedTime().asSeconds() > baseInterval * 2) {
             if (grid.isStuck()) {
                 if (!grid.spawnTetromino()) {
                     std::exit(0);  // lose

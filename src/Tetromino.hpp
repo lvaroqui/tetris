@@ -3,11 +3,13 @@
 #include "Block.hpp"
 
 namespace Tetromino {
-typedef std::array<std::array<bool, 4>, 4> Layout;
+
+template <size_t N>
+using Layout = std::array<std::array<bool, N>, N>;
 
 class Base {
 public:
-    Base(Block::Type type, const Layout* layout) : mType(type), mLayout(layout) {}
+    Base(Block::Type type) : mType(type) {}
     virtual ~Base() = default;
 
     virtual void rotateLeft() = 0;
@@ -25,12 +27,45 @@ public:
         mY += dY;
     }
 
-    std::array<sf::Vector2<int>, 4> toCoord() const {
+    virtual std::array<sf::Vector2<int>, 4> toCoord() const = 0;
+
+    Block::Type type() const { return mType; }
+
+    virtual std::unique_ptr<Base> clone() const = 0;
+
+private:
+    int mX = 0, mY = 0;
+    Block::Type mType;
+};
+
+template <std::size_t LAYOUT_WIDTH, std::size_t LAYOUT_NB>
+class BaseWithLayout : public Base {
+public:
+    typedef std::array<Layout<LAYOUT_WIDTH>, LAYOUT_NB> LayoutArray;
+
+    BaseWithLayout(Block::Type type, const LayoutArray& arr)
+        : Base(type), mLayout(arr) {}
+
+    void rotateLeft() override {
+        mIndex - 1;
+        if (mIndex > 0) {
+            mIndex = LAYOUT_NB - 1;
+        }
+    }
+
+    void rotateRight() override {
+        mIndex++;
+        if (mIndex >= LAYOUT_NB) {
+            mIndex = 0;
+        }
+    }
+
+    std::array<sf::Vector2<int>, 4> toCoord() const override {
         std::array<sf::Vector2<int>, 4> ret;
         int index = 0;
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (layout()[j][i]) {
+        for (int i = 0; i < LAYOUT_WIDTH; i++) {
+            for (int j = 0; j < LAYOUT_WIDTH; j++) {
+                if (mLayout[mIndex][j][i]) {
                     auto pos = position();
                     ret[index++] = {i + pos.x, j + pos.y};
                 }
@@ -39,78 +74,39 @@ public:
         return ret;
     }
 
-    const Layout& layout() const { return *mLayout; }
-    Block::Type type() const { return mType; }
-
-    virtual std::unique_ptr<Base> clone() const = 0;
-
-protected:
-    void setLayout(const Layout* layout) { mLayout = layout; }
-
 private:
-    int mX = 0, mY = 0;
-    Block::Type mType;
-    const Layout* mLayout;
+    int mIndex = 0;
+    LayoutArray mLayout;
 };
 
-template <std::size_t N>
-class BaseWithLayout : public Base {
-public:
-    typedef std::array<Layout, N> LayoutArray;
-
-    BaseWithLayout(Block::Type type, const LayoutArray& arr)
-        : Base(type, &arr[0]), layout(arr) {}
-
-    void rotateLeft() override {
-        index = (index - 1) % N;
-        setLayout(&layout[index]);
-    }
-
-    void rotateRight() override {
-        index = (index + 1) % N;
-        setLayout(&layout[index]);
-    }
-
-private:
-    int index = 0;
-    LayoutArray layout;
-};
-
-class O : public Base {
-    static constexpr Layout layout = {{{0, 0, 0, 0},
-                                       {0, 1, 1, 0},
-                                       {0, 1, 1, 0},
-                                       {0, 0, 0, 0}}};
+class O : public BaseWithLayout<2, 1> {
+    static constexpr LayoutArray layout = {{{{
+        {1, 1},
+        {1, 1},
+    }}}};
 
 public:
-    O() : Base(Block::O, &layout) {}
-
-    void rotateLeft() override {}
-    void rotateRight() override {}
+    O() : BaseWithLayout(Block::O, layout) {}
 
     std::unique_ptr<Base> clone() const override {
         return std::make_unique<O>(*this);
     }
 };
 
-class L : public BaseWithLayout<4> {
+class L : public BaseWithLayout<3, 4> {
     static constexpr LayoutArray layout =
-        {{{{{0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 1, 0},
-            {1, 0, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 1, 0},
-            {1, 1, 1, 0},
-            {0, 0, 0, 0}}}}};
+        {{{{{0, 1, 0},
+            {0, 1, 0},
+            {0, 1, 1}}},
+          {{{0, 0, 0},
+            {1, 1, 1},
+            {1, 0, 0}}},
+          {{{1, 1, 0},
+            {0, 1, 0},
+            {0, 1, 0}}},
+          {{{0, 0, 1},
+            {1, 1, 1},
+            {0, 0, 0}}}}};
 
 public:
     L() : BaseWithLayout(Block::L, layout) {}
@@ -120,7 +116,7 @@ public:
     }
 };
 
-class I : public BaseWithLayout<2> {
+class I : public BaseWithLayout<4, 2> {
     static constexpr LayoutArray layout = {{{{{0, 1, 0, 0},
                                               {0, 1, 0, 0},
                                               {0, 1, 0, 0},
@@ -138,24 +134,20 @@ public:
     }
 };
 
-class J : public BaseWithLayout<4> {
+class J : public BaseWithLayout<3, 4> {
     static constexpr LayoutArray layout =
-        {{{{{0, 0, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 1, 0},
-            {0, 1, 1, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 1},
-            {0, 0, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 1, 1},
-            {0, 0, 1, 0},
-            {0, 0, 1, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 1, 1, 1},
-            {0, 0, 0, 1}}}}};
+        {{{{{0, 1, 0},
+            {0, 1, 0},
+            {1, 1, 0}}},
+          {{{1, 0, 0},
+            {1, 1, 1},
+            {0, 0, 0}}},
+          {{{0, 1, 1},
+            {0, 1, 0},
+            {0, 1, 0}}},
+          {{{0, 0, 0},
+            {1, 1, 1},
+            {0, 0, 1}}}}};
 
 public:
     J() : BaseWithLayout(Block::J, layout) {}
@@ -165,25 +157,20 @@ public:
     }
 };
 
-
-class T : public BaseWithLayout<4> {
+class T : public BaseWithLayout<3, 4> {
     static constexpr LayoutArray layout =
-        {{{{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 1, 0},
-            {0, 1, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 1, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 0},
-            {0, 1, 0, 0}}}}};
+        {{{{{0, 0, 0},
+            {1, 1, 1},
+            {0, 1, 0}}},
+          {{{0, 1, 0},
+            {1, 1, 0},
+            {0, 1, 0}}},
+          {{{0, 0, 0},
+            {0, 1, 0},
+            {1, 1, 1}}},
+          {{{0, 1, 0},
+            {0, 1, 1},
+            {0, 1, 0}}}}};
 
 public:
     T() : BaseWithLayout(Block::T, layout) {}
@@ -193,24 +180,20 @@ public:
     }
 };
 
-class Z : public BaseWithLayout<4> {
+class Z : public BaseWithLayout<3, 4> {
     static constexpr LayoutArray layout =
-        {{{{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 1, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 0, 0},
-            {1, 0, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 1, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 1, 0},
-            {0, 1, 1, 0},
-            {0, 1, 0, 0}}}}};
+        {{{{{0, 0, 0},
+            {1, 1, 0},
+            {0, 1, 1}}},
+          {{{0, 1, 0},
+            {1, 1, 0},
+            {1, 0, 0}}},
+          {{{0, 0, 0},
+            {1, 1, 0},
+            {0, 1, 1}}},
+          {{{0, 0, 1},
+            {0, 1, 1},
+            {0, 1, 0}}}}};
 
 public:
     Z() : BaseWithLayout(Block::Z, layout) {}
@@ -220,24 +203,24 @@ public:
     }
 };
 
-class S : public BaseWithLayout<4> {
+class S : public BaseWithLayout<3, 4> {
     static constexpr LayoutArray layout =
-        {{{{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {1, 1, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {1, 0, 0, 0},
-            {1, 1, 0, 0},
-            {0, 1, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 0, 0, 0},
-            {0, 1, 1, 0},
-            {1, 1, 0, 0}}},
-          {{{0, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 1, 0},
-            {0, 0, 1, 0}}}}};
+        {{{{
+            {0, 0, 0},
+            {0, 1, 1},
+            {1, 1, 0}}},
+          {{
+            {1, 0, 0},
+            {1, 1, 0},
+            {0, 1, 0}}},
+          {{
+            {0, 0, 0},
+            {0, 1, 1},
+            {1, 1, 0}}},
+          {{
+            {0, 1, 0},
+            {0, 1, 1},
+            {0, 0, 1}}}}};
 
 public:
     S() : BaseWithLayout(Block::S, layout) {}
