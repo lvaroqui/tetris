@@ -7,7 +7,7 @@ int main() {
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 
-    sf::RenderWindow window(sf::VideoMode(FULL_AREA_WIDTH * BLOCK_SIZE, FULL_AREA_HEIGHT * BLOCK_SIZE), "Tetris", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(FULL_AREA_WIDTH * BLOCK_SIZE + BLOCK_SIZE * 10, FULL_AREA_HEIGHT * BLOCK_SIZE), "Tetris", sf::Style::Default, settings);
 
     window.setFramerateLimit(144);
     window.setKeyRepeatEnabled(false);
@@ -21,6 +21,16 @@ int main() {
     Grid grid;
     grid.spawnTetromino();
 
+    auto updateLayout = [&](unsigned int width, unsigned int height) {
+        sf::FloatRect visibleArea(0, 0, width, height);
+
+        grid.setPosition(width / 2, height / 2);
+
+        window.setView(sf::View(visibleArea));
+    };
+
+    updateLayout(window.getSize().x, window.getSize().y);
+
     sf::Clock dropClock;
     sf::Clock slideClock;
     sf::Clock stuckClock;  // Clock to check that the piece is stuck
@@ -30,8 +40,7 @@ int main() {
             if (event.type == sf::Event::Closed) window.close();
             if (event.type == sf::Event::Resized) {
                 // update the view to the new size of the window
-                sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
-                window.setView(sf::View(visibleArea));
+                updateLayout(event.size.width, event.size.height);
             }
             if (event.type == sf::Event::KeyPressed) {
                 switch (event.key.code) {

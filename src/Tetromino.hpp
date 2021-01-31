@@ -247,4 +247,28 @@ public:
     }
 };
 
+class Factory {
+public:
+    static std::unique_ptr<Base> create(Block::Type type) {
+        switch (type) {
+            case Block::I:
+                return std::make_unique<Tetromino::I>();
+            case Block::J:
+                return std::make_unique<Tetromino::J>();
+            case Block::L:
+                return std::make_unique<Tetromino::L>();
+            case Block::O:
+                return std::make_unique<Tetromino::O>();
+            case Block::S:
+                return std::make_unique<Tetromino::S>();
+            case Block::T:
+                return std::make_unique<Tetromino::T>();
+            case Block::Z:
+                return std::make_unique<Tetromino::Z>();
+            default:
+                return nullptr;
+        }
+    }
+};
+
 }  // namespace Tetromino

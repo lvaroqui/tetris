@@ -7,7 +7,7 @@
 #include "Block.hpp"
 #include "Tetromino.hpp"
 
-class Grid : public sf::Drawable {
+class Grid : public sf::Drawable, public sf::Transformable {
 public:
     Grid();
 
@@ -19,31 +19,13 @@ public:
 
     bool spawnTetromino() {
         Block::Type type = (Block::Type)distrib(gen);
-        switch (type) {
-            case Block::I:
-                mActiveTetromino = std::make_unique<Tetromino::I>();
-                break;
-            case Block::J:
-                mActiveTetromino = std::make_unique<Tetromino::J>();
-                break;
-            case Block::L:
-                mActiveTetromino = std::make_unique<Tetromino::L>();
-                break;
-            case Block::O:
-                mActiveTetromino = std::make_unique<Tetromino::O>();
-                break;
-            case Block::S:
-                mActiveTetromino = std::make_unique<Tetromino::S>();
-                break;
-            case Block::T:
-                mActiveTetromino = std::make_unique<Tetromino::T>();
-                break;
-            case Block::Z:
-                mActiveTetromino = std::make_unique<Tetromino::Z>();
-                break;
-            default:
-                std::abort();
+        
+        mActiveTetromino = Tetromino::Factory::create(type);
+
+        if (!mActiveTetromino) {
+            std::abort();
         }
+
         mActiveTetromino->setPosition(3, 0);
 
         for (auto c : mActiveTetromino->toCoord()) {
