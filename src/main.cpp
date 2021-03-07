@@ -45,11 +45,11 @@ int main() {
             if (event.type == sf::Event::KeyPressed) {
                 switch (event.key.code) {
                     case sf::Keyboard::Left:
-                        grid.left();
+                        grid.moveLeft();
                         slideClock.restart();
                         break;
                     case sf::Keyboard::Right:
-                        grid.right();
+                        grid.moveRight();
                         slideClock.restart();
                         break;
                     case sf::Keyboard::Space:
@@ -84,11 +84,11 @@ int main() {
 
         if (slideClock.getElapsedTime().asSeconds() > slideInterval) {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-                grid.left();
+                grid.moveLeft();
             }
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-                grid.right();
+                grid.moveRight();
             }
             slideClock.restart();
         }

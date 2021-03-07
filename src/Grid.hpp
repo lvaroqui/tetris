@@ -8,7 +8,7 @@
 #include "Tetromino.hpp"
 
 class Grid : public sf::Drawable, public sf::Transformable {
-public:
+   public:
     Grid();
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -19,7 +19,7 @@ public:
 
     bool spawnTetromino() {
         Block::Type type = (Block::Type)distrib(gen);
-        
+
         mActiveTetromino = Tetromino::Factory::create(type);
 
         if (!mActiveTetromino) {
@@ -102,7 +102,7 @@ public:
         };
     }
 
-    void left() {
+    void moveLeft() {
         if (!mActiveTetromino) {
             return;
         }
@@ -110,7 +110,7 @@ public:
         computeGhost();
     }
 
-    void right() {
+    void moveRight() {
         if (!mActiveTetromino) {
             return;
         }
@@ -127,9 +127,16 @@ public:
 
         newPos->rotateRight();
 
+        // "Wall Kick" behaviour
         if (!isValid(*newPos)) {
-            showTetromino();
-            return;
+            newPos->move(-1, 0);
+            if (!isValid(*newPos)) {
+                newPos->move(2, 0);
+                if (!isValid(*newPos)) {
+                    showTetromino();
+                    return;
+                }
+            }
         }
 
         mActiveTetromino = std::move(newPos);
@@ -138,7 +145,7 @@ public:
         computeGhost();
     }
 
-private:
+   private:
     bool moveTetromino(int dX, int dY) {
         hideTetromino();
         auto newPos = mActiveTetromino->clone();
